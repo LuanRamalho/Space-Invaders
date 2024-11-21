@@ -3,6 +3,7 @@ from random import choice, randint
 from math import ceil
 import pygame
 import os
+import json
 
 
 # Variáveis globais que são necessárias em diversos momentos
@@ -262,6 +263,25 @@ class Bullet(pygame.sprite.Sprite):
 
 
 class SpaceInvaders():
+    def load_high_score(self):
+        """
+        Carrega o HighScore do arquivo JSON. Se o arquivo não existir, inicializa com 0.
+        """
+        try:
+            with open("highscore.json", "r") as file:
+                data = json.load(file)
+                return data.get("high_score", 0)
+        except FileNotFoundError:
+            return 0
+
+    def save_high_score(self):
+        """
+        Salva o HighScore atual no arquivo JSON.
+        """
+        with open("highscore.json", "w") as file:
+            json.dump({"high_score": self.high_score}, file)
+
+    
     """
     Classe que comanda os principais comandos do jogo.
     """
@@ -389,6 +409,9 @@ class SpaceInvaders():
             self.window.blit(command2, command2_rect)
             self.clock.tick(60)
             pygame.display.update()
+            high_score_text = self.font.render(f"HighScore: {self.high_score}", True, (255, 255, 255))
+            self.window.blit(high_score_text, (10, 10))
+            pygame.display.flip()
     
     def final_screen(self):
         """
@@ -636,6 +659,10 @@ class SpaceInvaders():
             self.window.blit(self.explosion_image, (self.ship_sprite.rect.x, self.ship_sprite.rect.y))
             self.ship_sprite.die()
 
+        if self.score > self.high_score:
+            self.high_score = self.score
+            self.save_high_score()
+
     def update_direction(self):
         """
         Atualiza a direção dos invasores.
@@ -669,13 +696,16 @@ class SpaceInvaders():
 
     def main(self):
         """
-        Método principal do jogo.
+        Método principal do jogo, agora com suporte a HighScore.
         """
+
+        # Carrega o HighScore ao iniciar o jogo
+        self.high_score = self.load_high_score()
 
         # Variável necessária para que o loop onde o jogo ocorre dure o tempo necessário.
         run = True
         menu = True
-        
+
         while menu:
             command = self.home_screen()
 
@@ -683,7 +713,7 @@ class SpaceInvaders():
                 menu = False
                 pygame.quit()
                 exit()
-        
+
             while run:
                 if self.ship_sprite.lifes <= 0:
                     self.final_screen()
@@ -702,6 +732,7 @@ class SpaceInvaders():
                                 self.ship_shot.add(self.ship_sprite.shoot())
 
                     self.update()
+
 
 
 
